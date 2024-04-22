@@ -16,15 +16,17 @@ def get_host_memory():
     memory_allocated = round(psutil.Process().memory_info().rss / 1024**3, 3)
     print("cpu"," memory used total: ", memory_allocated, "GB")
 
-model_id = "/home/models/stable-video-diffusion-img2vid-xt-1-1/"
+#model_id = "/home/models/stable-video-diffusion-img2vid-xt-1-1/"
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
+    parser.add_argument('--model_path', help="model path for stable-video-diffusion-img2vid-xt-1-1")
     parser.add_argument('--bf16', default=False, action='store_true', help="FP32 - Default")
 
     args = parser.parse_args()
-    
+
+    model_id = args.model_path
     #pipe = StableVideoDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float32, variant="fp32")
     pipe = StableVideoDiffusionPipelineIpex.from_pretrained(model_id, torch_dtype=torch.float32, variant="fp32")
     pipe.to("cpu")
