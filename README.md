@@ -12,12 +12,11 @@ Create conda env
 ```
 conda create -n svd_xt python=3.10
 conda activate svd_xt
-conda install jemalloc
+conda install jemalloc==5.2.1
 ```
 Install dependencyies
 ```
-pip install torch==2.1.0 transformers diffusers accelerate mkl intel-openmp
-pip install intel_extension_for_pytorch-2.1.0+git383aedd-cp310-cp310-linux_x86_64.whl
+pip install -r requirements.txt
 ```
 ## Run optimized SVD solution using diffusers pipeline
 ```

@@ -1,0 +1,7 @@
+torch==2.1.0
+transformers==4.40.0
+diffusers==0.27.2
+accelerate
+mkl==2024.1.0
+intel-openmp==2024.1.0
+./intel_extension_for_pytorch-2.1.0+git383aedd-cp310-cp310-linux_x86_64.whl

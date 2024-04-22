@@ -1,4 +1,4 @@
-ENV_PATH=/home/conda/envs/svd_xt/
+ENV_PATH=/home/conda/envs/test_svd_for_ctrip
 
 export KMP_BLOCKTIME=1
 export KMP_AFFINITY=granularity=fine,compact,1,0
