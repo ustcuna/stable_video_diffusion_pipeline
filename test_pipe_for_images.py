@@ -2,6 +2,8 @@ import torch
 import argparse
 import time
 import torch
+import os
+import glob
 import datetime
 import psutil
 from datetime import datetime, date, timedelta
@@ -31,28 +33,35 @@ if __name__ == '__main__':
     pipe = StableVideoDiffusionPipelineIpex.from_pretrained(model_id, torch_dtype=torch.float32, variant="fp32")
     pipe.to("cpu")
 
-    #image = load_image("./bali.jpg")
-    image = load_image("./test_image.png")
-    image = image.resize((1024, 576))
+    example_image = load_image("./test_image.png")
+    example_image = example_image.resize((1024, 576))
     
     get_host_memory()
     
     data_type = torch.bfloat16 if args.bf16 else torch.float32
 
-    pipe.prepare_for_ipex(image, data_type, height=576, width=1024, num_frames=25, num_inference_steps=30)
+    pipe.prepare_for_ipex(example_image, data_type, height=576, width=1024, num_frames=25, num_inference_steps=30)
+
+    images = []
+    image_dir = "./input_images"
+    allowed_extensions = [".jpg", ".png", ".jpeg"]  # Add more extensions as needed
+    image_files = [file for file in glob.glob(os.path.join(image_dir, "*")) if os.path.splitext(file)[1] in allowed_extensions]
+
+    for image_file in image_files:
+        image = load_image(image_file)
+        image = image.resize((1024, 576))
+        images.append(image)
     
     generator = torch.Generator(device).manual_seed(4)
     with torch.no_grad(), torch.cpu.amp.autocast(enabled=args.bf16, dtype=torch.bfloat16):
-        for i in range(1):
-            print('')
+        index = 0
+        for i in images:
             t1 = time.time()
-            frames = pipe(image, num_frames=25, num_inference_steps=30, decode_chunk_size=8, generator=generator).frames[0]
+            frames = pipe(i, num_frames=25, num_inference_steps=30, decode_chunk_size=8, generator=generator).frames[0]
             t2 = time.time()
             print('svd_xt_1_1 inference latency: {:.3f} sec'.format(t2-t1))
             print('******************************')
             print('')
-
-        post_fix = "bf16" if args.bf16 else "fp32"
-        export_to_video(frames, "generated_" + post_fix + ".mp4", fps=10)
-
-
+            post_fix = "bf16" if args.bf16 else "fp32"
+            export_to_video(frames, "generated_" + str(index) + "_" + post_fix + ".mp4", fps=10)
+            index += 1
