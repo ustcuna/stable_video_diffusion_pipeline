@@ -7,6 +7,7 @@ import glob
 import datetime
 import psutil
 from datetime import datetime, date, timedelta
+from torchvision.transforms import ToTensor
 
 from diffusers import StableVideoDiffusionPipeline
 from diffusers.utils import load_image, export_to_video
@@ -32,15 +33,10 @@ if __name__ == '__main__':
     #pipe = StableVideoDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float32, variant="fp32")
     pipe = StableVideoDiffusionPipelineIpex.from_pretrained(model_id, torch_dtype=torch.float32, variant="fp32")
     pipe.to("cpu")
-
-    example_image = load_image("./test_image.png")
-    example_image = example_image.resize((1024, 576))
     
     get_host_memory()
     
     data_type = torch.bfloat16 if args.bf16 else torch.float32
-
-    pipe.prepare_for_ipex(example_image, data_type, height=576, width=1024, num_frames=25, num_inference_steps=30)
 
     images = []
     image_dir = "./input_images"
@@ -54,8 +50,12 @@ if __name__ == '__main__':
     
     generator = torch.Generator(device).manual_seed(4)
     with torch.no_grad(), torch.cpu.amp.autocast(enabled=args.bf16, dtype=torch.bfloat16):
+        prepared = False
         index = 0
         for i in images:
+            if not prepared:
+                pipe.prepare_for_ipex(i, data_type, height=576, width=1024, num_frames=25, num_inference_steps=30)
+                prepared = True
             t1 = time.time()
             frames = pipe(i, num_frames=25, num_inference_steps=30, decode_chunk_size=8, generator=generator).frames[0]
             t2 = time.time()
